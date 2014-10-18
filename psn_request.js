@@ -72,6 +72,12 @@ function PSNObj(options)
 		username: 		false
 	};
 
+	// store email & password to login
+	var login_details = {
+		email: false,
+		password: false
+	};
+
 
 	/** Basic Logging Registry */
 	var logFuncs = [];
@@ -280,7 +286,7 @@ function PSNObj(options)
 	}
 
 	/** Login to app and get auth token */
-	function Login(email, password, callback)
+	function Login(callback)
 	{
 		Log("Making OAuth Request...");
 		// start OAuth request (use our internal GET function as this is different!)
@@ -326,8 +332,8 @@ function PSNObj(options)
 				            form:
 				            {
 				                'params': 'service_entity=psn',
-				                'j_username': email,
-				                'j_password': password
+				                'j_username': login_details.email,
+				                'j_password': login_details.password
 				            }
 			        	},
 				        function (err, response, body)
@@ -361,7 +367,8 @@ function PSNObj(options)
 					                		if (auth_result.query.authCode)
 					                		{
 					                			Log("Got auth code: " + auth_result.query.authCode);
-					                			if (callback) callback(false, auth_result.query.authCode);
+					                			auth_obj.auth_code = auth_result.query.authCode;
+					                			if (callback) callback(false);
 					                			return;
 					                		}
 					                		else
@@ -513,7 +520,7 @@ function PSNObj(options)
 		}
 
 		// get auth token from login site
-		Login(email, password, function(err, auth_code) {
+		Login(function(err, auth_code) {
 			if (err)
 			{
 				if (callback) callback(err);
@@ -582,7 +589,14 @@ function PSNObj(options)
 	{
 		// build list of tokens we're missing
 		var todo = [];
-		if (auth_obj.expire_time && auth_obj.expire_time < new Date().getTime())
+
+		// make sure we're actually logged in first
+		if (!auth_obj.auth_code)
+		{
+			todo.push(Login);
+		}
+
+		if (!auth_obj.expire_time || auth_obj.expire_time < new Date().getTime())
 		{
 			// token has expired! Fetch access_token again
 			todo.push(GetAccessToken);
@@ -674,6 +688,23 @@ function PSNObj(options)
 							return;
 						}
 
+						if (data.error && (data.error.code === 2105858 || data.error.code === 2138626))
+						{
+							// access token has expired/failed/borked
+							//  login again!
+							Log("Access token failure, try to login again.");
+							Login(function(error) {
+								if (error)
+								{
+									if (callback) callback(error);
+									return;
+								}
+
+								// call ourselves
+								parent.Get(url, fields, callback, token_fetch);
+							});
+						}
+
 						if (data.error && data.error.message)
 						{
 							// server error
@@ -732,6 +763,61 @@ function PSNObj(options)
 		if (options.debug)
 		{
 			this.OnLog(DebugLog);
+		}
+
+		// store email and password
+		if (options.email && options.password)
+		{
+			login_details.email = options.email;
+			login_details.password = options.password;
+		}
+
+		// optionally read/write to an authfile
+		if (options.authfile && options.authcallback)
+		{
+			// register to OnSave
+			parent.OnSave(function(data, callback)
+			{
+				fs.writeFile(options.authfile, data, function(err)
+				{
+					if (err)
+					{
+						Log("Failed to write save data: " + err);
+					}
+
+					// always call the callback anyway
+					if (callback) callback();
+				});
+			});
+
+			// load up file (if it already exists)
+			var fs = require("fs");
+			fs.exists(options.authfile, function(exists)
+			{
+				if (exists)
+				{
+					// load previously saved data
+					fs.readFile(options.authfile, 'ascii', function(err, data)
+					{
+						parent.Load(data, function(err)
+						{
+							if (err)
+							{
+								console.log(err);
+								return;
+							}
+
+							// callback
+							options.authcallback();
+						});
+					});
+				}
+				else
+				{
+					// couldn't find file, but still callback
+					options.authcallback();
+				}
+			});
 		}
 	}
 }
