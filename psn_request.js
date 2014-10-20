@@ -296,7 +296,7 @@ function PSNObj(options)
 
 		var settings = 
 		{
-			url: url + ((fields && method == "GET") ? ("?" + querystring.stringify(fields)) : ""),
+			url: url,
 			headers: headers,
 			method: method
 		};
@@ -304,7 +304,7 @@ function PSNObj(options)
 		// put fields in correct place in HTTP header depending on method
 		if (method == "GET")
 		{
-			if (fields) settings.url = settings.url + querystring.stringify(fields);
+			if (fields) settings.url = settings.url + "?" + querystring.stringify(fields);
 		}
 		else if (method == "POST")
 		{
@@ -322,8 +322,30 @@ function PSNObj(options)
 					if (callback) callback("Request error: " + err);
 					return;
 				}
+				else if (response.statusCode == 401)
+				{
+					Log("Got error " + response.statusCode+", refreshing access token");
+					// token expired, unset access token
+					auth_obj.access_token = false;
+					GetAccessToken(function(error) {
+						if (error)
+						{
+							if (callback) callback("Failed to refresh token: " + error);
+							return;
+						}
+
+						_URLGET(url, fields, headers, method, callback);
+					});
+					return;
+				}
 				else if (response.statusCode > 300)
 				{
+					if (response.body && response.body.error)
+					{
+						// we also got a nice error message!
+						if (callback) callback("Server error: " + response.body.error + " :: " + response.body.errorDescription);
+						return;
+					}
 					// server successfully returned, but returned an error
 					if (callback) callback("Server error: " + response.statusCode);
 					return;
