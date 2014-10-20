@@ -754,7 +754,24 @@ function PSNObj(options)
 		);
 	}
 
-
+	/** Called when we're all setup */
+	function Ready()
+	{
+		if (options.autoconnect)
+		{
+			// make a connection request immediately (optional)
+			parent.GetPSN(true, function() {
+				if (options.onReady) options.onReady();
+				return;
+			});
+		}
+		else
+		{
+			// just callback that we're ready (if anyone is listening)
+			if (options.onReady) options.onReady();
+			return;
+		}
+	}
 
 	// init library
 	if (options)
@@ -773,7 +790,7 @@ function PSNObj(options)
 		}
 
 		// optionally read/write to an authfile
-		if (options.authfile && options.authcallback)
+		if (options.authfile)
 		{
 			// register to OnSave
 			parent.OnSave(function(data, callback)
@@ -807,15 +824,15 @@ function PSNObj(options)
 								return;
 							}
 
-							// callback
-							options.authcallback();
+							// mark as ready
+							Ready();
 						});
 					});
 				}
 				else
 				{
-					// couldn't find file, but still callback
-					options.authcallback();
+					// couldn't find file, but still mark ready to go!
+					Ready();
 				}
 			});
 		}
