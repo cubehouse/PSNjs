@@ -1,5 +1,6 @@
 // libraries
 var url = require("url");
+var querystring = require("querystring");
 
 // Available languages
 languages = [
@@ -157,11 +158,38 @@ function PSNObj(options)
 		if (callback) callback(false);
 	};
 
-	// load request library
-	var request = require('request').defaults({
-		// use a cookie jar for logging in
-	    jar: true
-	});
+
+	/** Clean up a given username, PSN (according to Wikipedia) only accepts alphanumberic, underscores and hyphens */
+	this.CleanPSN = function(username)
+	{
+	    return username.replace(/[^a-zA-Z0-9_\-\|]/g, "");
+	}
+
+	/** Check a PSN name is valid (must run against validate regex and be between 2 and 21 characters) */
+	this.CheckPSN = function(username)
+	{
+	    username = this.CleanPSN(username);
+
+	    if ((username.length < 2) || (username.length>21))
+	    {
+	        return false;
+	    }
+
+	    return username;
+	}
+
+	/** Replace {{id}} with the supplied username after cleaning up the username */
+	this.ReplacePSNUsername = function(input, username)
+	{
+		// cleanup username
+		username = parent.CheckPSN(username);
+
+		// return replaced {{id}} if username is valid
+		if (username && input) return input.replace(/{{id}}/g, username);
+
+		// failthrough, return original input
+		return input;
+	}
 
 
 	/** Generate headers for a PSN request */
@@ -232,7 +260,6 @@ function PSNObj(options)
 				catch(parse_err)
 				{
 					// error parsing JSON result
-					Log(response);
 					Log("Parse JSON error: " + parse_err + "\r\nURL:\r\n" + url + "\r\nBody:\r\n" + body);
 					if (callback) callback("Parse JSON error: " + parse_err);
 					return;
@@ -248,9 +275,7 @@ function PSNObj(options)
 		// Make a PSN GET request using request() lib
 		request(
 			{
-				url: url,
-				// query-string fields
-				qs: fields,
+				url: url + ((fields) ? ("?" + querystring.stringify(fields)) : ""),
 				headers: headers
 			},
 			function(err, response, body)
@@ -261,8 +286,15 @@ function PSNObj(options)
 					if (callback) callback("Request error: " + err);
 					return;
 				}
+				else if (response.statusCode > 300)
+				{
+					// server successfully returned, but returned an error
+					if (callback) callback("Server error: " + response.statusCode);
+					return;
+				}
 				else
 				{
+					Log(response);
 					// success! return body
 					if (callback) callback(false, body, response);
 				}
@@ -281,6 +313,8 @@ function PSNObj(options)
 		if (auth_obj.access_token) ret = ret.replace(/{{access_token}}/g, auth_obj.access_token);
 		// replace {{region}}
 		if (auth_obj.region) ret = ret.replace(/{{region}}/g, auth_obj.region);
+		// replace {{psn}} with current user's PSN username
+		if (auth_obj.username) ret = ret.replace(/{{psn}}/g, auth_obj.username);
 
 		return ret;
 	}
@@ -773,6 +807,16 @@ function PSNObj(options)
 		}
 	}
 
+
+
+	// load request library
+	var request = require('request').defaults({
+		// use a cookie jar for logging in
+	    jar: true
+	});
+
+
+
 	// init library
 	if (options)
 	{
@@ -780,6 +824,12 @@ function PSNObj(options)
 		if (options.debug)
 		{
 			this.OnLog(DebugLog);
+		}
+
+		/** Optionally debug the Request lib */
+		if (options.requestDebug)
+		{
+			require('request').debug = true;
 		}
 
 		// store email and password
