@@ -240,9 +240,16 @@ function PSNObj(options)
 	}
 
 	/** Make a PSN GET request */
-	function URLGET(url, fields, callback)
+	function URLGET(url, fields, method, callback)
 	{
-		_URLGET(url, fields, GetHeaders({"Access-Control-Request-Method": "GET"}), function(err, body) {
+		// method variable is optional
+		if (typeof method == "function")
+		{
+			callback = method;
+			method = "GET";
+		}
+
+		_URLGET(url, fields, GetHeaders({"Access-Control-Request-Method": method}), method, function(err, body) {
 			if (err)
 			{
 				// got error, bounce it up
@@ -251,18 +258,26 @@ function PSNObj(options)
 			}
 			else
 			{
-				// try to parse JSON body
 				var JSONBody;
-				try
+				if (typeof body == "object")
 				{
-					JSONBody = JSON.parse(body);
+					// already a JSON object?
+					JSONBody = body;
 				}
-				catch(parse_err)
+				else
 				{
-					// error parsing JSON result
-					Log("Parse JSON error: " + parse_err + "\r\nURL:\r\n" + url + "\r\nBody:\r\n" + body);
-					if (callback) callback("Parse JSON error: " + parse_err);
-					return;
+					// try to parse JSON body
+					try
+					{
+						JSONBody = JSON.parse(body);
+					}
+					catch(parse_err)
+					{
+						// error parsing JSON result
+						Log("Parse JSON error: " + parse_err + "\r\nURL:\r\n" + url + "\r\nBody:\r\n" + body);
+						if (callback) callback("Parse JSON error: " + parse_err);
+						return;
+					}
 				}
 
 				// success! return JSON object
@@ -270,14 +285,35 @@ function PSNObj(options)
 			}
 		});
 	}
-	function _URLGET(url, fields, headers, callback)
+	function _URLGET(url, fields, headers, method, callback)
 	{
+		// method variable is optional
+		if (typeof method == "function")
+		{
+			callback = method;
+			method = "GET";
+		}
+
+		var settings = 
+		{
+			url: url + ((fields && method == "GET") ? ("?" + querystring.stringify(fields)) : ""),
+			headers: headers,
+			method: method
+		};
+
+		// put fields in correct place in HTTP header depending on method
+		if (method == "GET")
+		{
+			if (fields) settings.url = settings.url + querystring.stringify(fields);
+		}
+		else if (method == "POST")
+		{
+			if (fields) settings.json = fields;
+		}
+
 		// Make a PSN GET request using request() lib
 		request(
-			{
-				url: url + ((fields) ? ("?" + querystring.stringify(fields)) : ""),
-				headers: headers
-			},
+			settings,
 			function(err, response, body)
 			{
 				if (err)
@@ -294,7 +330,6 @@ function PSNObj(options)
 				}
 				else
 				{
-					Log(response);
 					// success! return body
 					if (callback) callback(false, body, response);
 				}
@@ -693,14 +728,19 @@ function PSNObj(options)
 
 
 	/** Make a PSN request */
-	this.Get = function(url, fields, callback, token_fetch)
+	function MakePSNRequest(method, url, fields, callback, token_fetch)
 	{
 		// use fields var as callback if it's missed out
 		if (typeof fields == "function")
 		{
-			token_fetch = callback;
+			token_fetch = false;
 			callback = fields;
 			fields = {};
+		}
+		else if (typeof method == "function")
+		{
+			token_fetch = false;
+			callback = method;
 		}
 
 		CheckTokens(function(error)
@@ -713,11 +753,12 @@ function PSNObj(options)
 					// parse URL for region etc.
 					ParseStaches(url),
 					fields,
+					method,
 					function(error, data)
 					{
 						if (error)
 						{
-							Log("PSN GET Error: " + error);
+							Log("PSN " + method + " Error: " + error);
 							if (callback) callback(error);
 							return;
 						}
@@ -760,6 +801,15 @@ function PSNObj(options)
 		}, token_fetch);
 	}
 
+
+	this.Get = function(url, fields, callback, token_fetch)
+	{
+		MakePSNRequest("GET", url, fields, callback, token_fetch);
+	}
+	this.Post = function(url, fields, callback, token_fetch)
+	{
+		MakePSNRequest("POST", url, fields, callback, token_fetch);
+	}
 
 
 	/** Get the logged in user's PSN ID and region */
