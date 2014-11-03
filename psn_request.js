@@ -795,6 +795,12 @@ function PSNObj(options)
 			callback = method;
 		}
 
+		// parse stache fields in fields list
+		for(var field_key in fields)
+		{
+			fields[field_key] = ParseStaches(fields[field_key]);
+		}
+
 		CheckTokens(function(error)
 		{
 			// check our tokens are fine
