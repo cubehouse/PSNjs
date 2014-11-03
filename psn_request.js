@@ -868,6 +868,14 @@ function PSNObj(options)
 	{
 		MakePSNRequest("POST", url, fields, callback, token_fetch);
 	}
+	this.Put = function(url, fields, callback, token_fetch)
+	{
+		MakePSNRequest("PUT", url, fields, callback, token_fetch);
+	}
+	this.Delete = function(url, fields, callback, token_fetch)
+	{
+		MakePSNRequest("DELETE", url, fields, callback, token_fetch);
+	}
 
 
 	/** Get the logged in user's PSN ID and region */
