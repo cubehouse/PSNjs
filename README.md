@@ -7,6 +7,8 @@ This is a simple Node.JS API for accessing PSN data.
 
 This is heavily based on work by psnapi.org and gumer-psn.
 
+Note: v0.1.x is a completely new API that is incompatible with 0.0.x. Please take care when writing your dependancies.
+
 ##Installing
 
 You can install it with the package manager
