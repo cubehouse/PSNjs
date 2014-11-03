@@ -75,17 +75,21 @@ PSNRequest.prototype.getMessageContent = function(messageGroupId, messageUid, me
 PSNRequest.prototype.activityTypes = [
 	"PURCHASED",
 	"RATED",
+	"PLAYED_WITH",
 	"VIDEO_UPLOAD",
 	"SCREENSHOT_UPLOAD",
 	"PLAYED_GAME",
-	"STORE_PROMO",
+	"LAUNCHED_GAME_FIRST_TIME",
 	"WATCHED_VIDEO",
 	"TROPHY",
 	"BROADCASTING",
 	"LIKED",
+	"PROFILE_ABOUT_ME",
 	"PROFILE_PIC",
 	"FRIENDED",
-	"CONTENT_SHARE"
+	"CONTENT_SHARE",
+	"STORE_PROMO",
+	"IN_GAME_POST"
 ];
 
 /** Get the signed-in user's activity feed
