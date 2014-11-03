@@ -6,6 +6,7 @@ var profileFields = "@default,relation,requestMessageFlag,presence,@personalDeta
 var friendFields = "@default,relation,onlineId,avatarUrl,plus,@personalDetail,trophySummary";
 var messageFields = "@default,messageGroupId,messageGroupDetail,totalUnseenMessages,totalMessages,latestMessage";
 var notificationFields = "@default,message,actionUrl";
+var trophyFields = "@default,trophyRare,trophyEarnedRate";
 
 /** Get a PSN user's profile
  * @param username		PSN username to request
@@ -289,6 +290,164 @@ PSNRequest.prototype.generateFriendURL = function(callback)
 		{
 			type: "ONE"
 		},
+		callback
+	);
+};
+
+/** Fetch trophy data for the logged in user (and optionally compare to another user)
+ * @param offset	(optional) Starting index of trophy data
+ * @param limit		(optional) Maximum number of titles to fetch
+ * @param username	(optional) PSN ID to compare trophies with
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.getUserTrophies = function(offset, limit, username, callback)
+{
+	// sort out optional variables
+	if (typeof offset == "function")
+	{
+		callback = offset;
+		offset = 0;
+		limit = 32;
+		username = false;
+	}
+	else if (typeof limit == "function")
+	{
+		callback = limit;
+		limit = 32;
+		username = false;
+	}
+	else if (typeof username == "function")
+	{
+		callback = username;
+		username = false;
+	}
+
+	var options = {
+		fields: "@default",
+		npLanguage: "{{lang}}",
+		iconSize: "m",
+		platform: "PS3,PSVITA,PS4",
+		offset: offset,
+		limit: limit
+	};
+
+	// optionally supply compared user
+	if (username)
+	{
+		// make sure username is valid
+		options.comparedUser = this.CleanPSN(username);
+	}
+
+	this.Get(
+		"https://{{region}}-tpy.np.community.playstation.net/trophy/v1/trophyTitles",
+		options,
+		callback
+	);
+};
+
+/** Get list of trophy groups for a title (eg. base game + DLC packs)
+ * @param npCommunicationId		Title ID
+ * @param Username 				(optional) Username to compare trophies to
+ * @param callback				Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.getTrophyGroups = function(npCommunicationId, username, callback)
+{
+	// compare username is optional
+	if (typeof username == "function")
+	{
+		callback = username;
+		username = false;
+	}
+
+	var options = {
+		npLanguage: "{{lang}}"
+	};
+
+	// compare to a user if supplied
+	if (username)
+	{
+		// make sure username is valid
+		options.comparedUser = this.CleanPSN(username);
+	}
+
+	this.Get(
+		"https://{{region}}-tpy.np.community.playstation.net/trophy/v1/trophyTitles/{{npCommunicationId}}/trophyGroups/"
+		.replace("{{npCommunicationId}}", this.CleanNPCommID(npCommunicationId)),
+		options,
+		callback
+	);
+};
+
+/** Get a title's trophies (supplying a trophy group), optionally comparing to another user.
+ * @param npCommunicationId 	Title ID
+ * @param trophyGroupId			Trophy Group ID (from getTrophyGroups)
+ * @param Username 				(optional) Username to compare trophies to
+ * @param callback				Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.getTrophies = function(npCommunicationId, trophyGroupId, username, callback)
+{
+	// compare username is optional
+	if (typeof username == "function")
+	{
+		callback = username;
+		username = false;
+	}
+
+	var options = {
+		fields: trophyFields,
+		npLanguage: "{{lang}}"
+	};
+
+	// compare to a user if supplied
+	if (username)
+	{
+		// make sure username is valid
+		options.comparedUser = this.CleanPSN(username);
+	}
+
+	this.Get(
+		"https://{{region}}-tpy.np.community.playstation.net/trophy/v1/trophyTitles/{{npCommunicationId}}/trophyGroups/{{groupId}}/trophies"
+		.replace("{{npCommunicationId}}", this.CleanNPCommID(npCommunicationId))
+		.replace("{{groupId}}", this.CleanNPCommID(trophyGroupId)),
+		options,
+		callback
+	);
+};
+
+/** Get data on a specific trophy in a title with supplied trophyId. Optionally compare to a username.
+ * @param npCommunicationId 	Title ID
+ * @param trophyGroupId			Trophy Group ID (from getTrophyGroups)
+ * @param trophyId 				Trophy ID
+ * @param Username 				(optional) Username to compare trophies to
+ * @param callback				Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.getTrophy = function(npCommunicationId, trophyGroupId, trophyId, username, callback)
+{
+	// compare username is optional
+	if (typeof username == "function")
+	{
+		callback = username;
+		username = false;
+	}
+
+	var options = {
+		fields: trophyFields,
+		npLanguage: "{{lang}}"
+	};
+
+	// compare to a user if supplied
+	if (username)
+	{
+		// make sure username is valid
+		options.comparedUser = this.CleanPSN(username);
+	}
+
+	this.Get(
+		"https://{{region}}-tpy.np.community.playstation.net/trophy/v1/trophyTitles/{{npCommunicationId}}/trophyGroups/{{groupId}}/trophies/{{trophyID}}"
+		.replace("{{npCommunicationId}}", this.CleanNPCommID(npCommunicationId))
+		.replace("{{groupId}}", this.CleanNPCommID(trophyGroupId))
+		.replace("{{trophyID}}", parseInt(trophyId)),
+		options,
 		callback
 	);
 };
