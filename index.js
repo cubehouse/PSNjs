@@ -4,6 +4,7 @@ var PSNRequest = require("./psn_request");
 // which fields to request when getting a profile
 var profileFields = "@default,relation,requestMessageFlag,presence,@personalDetail,trophySummary";
 var messageFields = "@default,messageGroupId,messageGroupDetail,totalUnseenMessages,totalMessages,latestMessage";
+var notificationFields = "@default,message,actionUrl";
 
 /** Get a PSN user's profile
  * @param username		PSN username to request
@@ -167,6 +168,21 @@ PSNRequest.prototype.dislikeActivity = function(storyId, callback)
 {
 	// just call like with dislike set to true
 	this.likeActivity(storyId, true, callback);
+}
+
+/** Get notifications of currently authenticated user
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.getNotifications = function(callback)
+{
+	this.Get(
+		"https://{{region}}-ntl.np.community.playstation.net/notificationList/v1/users/{{psn}}/notifications",
+		{
+			fields: notificationFields,
+			npLanguage: "{{lang}}"
+		},
+		callback
+	);
 }
 
 // return our new psn request object with our new helper functions
