@@ -19,7 +19,7 @@ PSNRequest.prototype.getProfile = function(username, callback)
 		},
 		callback
 	);
-}
+};
 
 /** Get current user's message groups
  * @param callback		Callback function with error (false if no error) and returned data object
@@ -33,7 +33,7 @@ PSNRequest.prototype.getMessageGroups = function(callback)
 		},
 		callback
 	);
-}
+};
 
 /** Get data from a specific message. All this data can be found in getMessageGroups
  * @param messageGroupId 	Group ID requested message belongs to
@@ -68,7 +68,7 @@ PSNRequest.prototype.getMessageContent = function(messageGroupId, messageUid, me
 		},
 		callback
 	);
-}
+};
 
 // list valid filters for activity feeds
 PSNRequest.prototype.activityTypes = [
@@ -135,7 +135,7 @@ PSNRequest.prototype.getLatestActivity = function(feed, filters, page, callback)
 		},
 		callback
 	);
-}
+};
 
 /** Like an activity from the activity feed
  * @param storyId	The ID of the activity we want to like
@@ -158,7 +158,7 @@ PSNRequest.prototype.likeActivity = function(storyId, dislike, callback)
 		{},
 		callback
 	);
-}
+};
 
 /** Dislike an activity from the activity feed
  * @param storyId	The ID of the activity we want to dislike
@@ -168,7 +168,7 @@ PSNRequest.prototype.dislikeActivity = function(storyId, callback)
 {
 	// just call like with dislike set to true
 	this.likeActivity(storyId, true, callback);
-}
+};
 
 /** Get notifications of currently authenticated user
  * @param callback	Callback function with error (false if no error) and returned data object
@@ -183,7 +183,48 @@ PSNRequest.prototype.getNotifications = function(callback)
 		},
 		callback
 	);
-}
+};
+
+/** Add a friend to PSN (must have received a friend request from the user)
+ * @param username	Username to add
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.addFriend = function(username, callback)
+{
+	this.Put(
+		this.ReplacePSNUsername("https://{{region}}-prof.np.community.playstation.net/userProfile/v1/users/{{psn}}/friendList/{{id}}", username),
+		{},
+		callback
+	);
+};
+
+/** Remove a friend from PSN
+ * @param username	Username to remove
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.removeFriend = function(username, callback)
+{
+	this.Delete(
+		this.ReplacePSNUsername("https://{{region}}-prof.np.community.playstation.net/userProfile/v1/users/{{psn}}/friendList/{{id}}", username),
+		{},
+		callback
+	);
+};
+
+/** Send a friend request to a user
+ * @param username	Username to add
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.sendFriendRequest = function(username, message, callback)
+{
+	this.Post(
+		this.ReplacePSNUsername("https://{{region}}-prof.np.community.playstation.net/userProfile/v1/users/{{psn}}/friendList/{{id}}", username),
+		{
+			requestMessage: message
+		},
+		callback
+	);
+};
 
 // return our new psn request object with our new helper functions
 module.exports = PSNRequest;
