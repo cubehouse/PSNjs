@@ -1,12 +1,16 @@
 {
-	"name": "gumer-psn",
-	"description": "A Playstation Network API",
-	"version": "0.1.2",
+	"name": "PSNjs",
+	"description": "API Framework for PSN",
+	"version": "0.1.0",
 	"author": {
-		"name": "José Augusto Sächs",
-		"email": "admin@jsachs.net"
+		"name": "Jamie Holding",
+		"email": "me@jamie.holdings"
 	},
 	"contributors": [
+		{
+			"name": "Jamie Holding",
+			"email": "me@jamie.holdings"
+		},
 		{
 			"name": "José Augusto Sächs",
 			"email": "admin@jsachs.net"
@@ -17,12 +21,9 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/jhewt/gumer-psn.git"
+		"url": "git://github.com/cubehouse/PSNjs.git"
 	},
-	"bugs": {
-		"url": "http://github.com/jhewt/gumer-psn/issues"
-	},
-	"main": "psn.js",
+	"main": "index.js",
 	"readmeFilename": "README.md",
 	"license": "MIT"
 }
