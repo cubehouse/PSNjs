@@ -273,7 +273,7 @@ function PSNObj(options)
 				else
 				{
 					// try to parse JSON body
-					if (!/\S/.test(body))
+					if (!body || !/\S/.test(body))
 					{
 						// string is empty, return empty object
 						if (callback) callback(false, {});
@@ -357,8 +357,16 @@ function PSNObj(options)
 				{
 					if (response.body && response.body.error)
 					{
-						// we also got a nice error message!
-						if (callback) callback("Server error: " + response.body.error + " :: " + response.body.errorDescription);
+						if (response.body.error.code)
+						{
+							// got full error object
+							if (callback) callback("Server error: " + response.body.error.code + " :: " + response.body.error.message);
+						}
+						else
+						{
+							// we also got a nice error message!
+							if (callback) callback("Server error: " + response.body.error + " :: " + response.body.errorDescription);
+						}
 						return;
 					}
 					// server successfully returned, but returned an error
