@@ -273,16 +273,25 @@ function PSNObj(options)
 				else
 				{
 					// try to parse JSON body
-					try
+					if (!/\S/.test(body))
 					{
-						JSONBody = JSON.parse(body);
-					}
-					catch(parse_err)
-					{
-						// error parsing JSON result
-						Log("Parse JSON error: " + parse_err + "\r\nURL:\r\n" + url + "\r\nBody:\r\n" + body);
-						if (callback) callback("Parse JSON error: " + parse_err);
+						// string is empty, return empty object
+						if (callback) callback(false, {});
 						return;
+					}
+					else
+					{
+						try
+						{
+							JSONBody = JSON.parse(body);
+						}
+						catch(parse_err)
+						{
+							// error parsing JSON result
+							Log("Parse JSON error: " + parse_err + "\r\nURL:\r\n" + url + "\r\nBody:\r\n" + body);
+							if (callback) callback("Parse JSON error: " + parse_err);
+							return;
+						}
 					}
 				}
 
