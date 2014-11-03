@@ -277,7 +277,21 @@ PSNRequest.prototype.getFriends = function(offset, limit, friendType, callback)
 		},
 		callback
 	);
-}
+};
+
+/** Generate a friend URL you can give to people to add you as a friend.
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.generateFriendURL = function(callback)
+{
+	this.Post(
+		"https://friendme.sonyentertainmentnetwork.com/friendme/api/v1/c2s/users/me/friendrequest",
+		{
+			type: "ONE"
+		},
+		callback
+	);
+};
 
 // return our new psn request object with our new helper functions
 module.exports = PSNRequest;
