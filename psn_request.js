@@ -165,6 +165,12 @@ function PSNObj(options)
 	    return username.replace(/[^a-zA-Z0-9_\-\|]/g, "");
 	}
 
+	/** Clean up username list (used in getting individual messages etc) */
+	this.CleanPSNList = function(input)
+	{
+		return input.replace(/[^a-zA-Z0-9_\-\|,~]/g, "");
+	}
+
 	/** Check a PSN name is valid (must run against validate regex and be between 2 and 21 characters) */
 	this.CheckPSN = function(username)
 	{
@@ -347,7 +353,23 @@ function PSNObj(options)
 						return;
 					}
 					// server successfully returned, but returned an error
-					if (callback) callback("Server error: " + response.statusCode);
+					var JSONBody;
+					try
+					{
+						JSONBody = JSON.parse(response.body);
+					}
+					catch(error_err)
+					{
+					}
+
+					if (JSONBody && JSONBody.error && JSONBody.error.message)
+					{
+						if (callback) callback("Server error: " + response.statusCode + ": " + JSONBody.error.code + " - " + JSONBody.error.message);
+					}
+					else
+					{
+						if (callback) callback("Server error: " + response.statusCode);
+					}
 					return;
 				}
 				else
