@@ -165,6 +165,12 @@ function PSNObj(options)
 	    return username.replace(/[^a-zA-Z0-9_\-\|]/g, "");
 	}
 
+	/** Clean up username list (used in getting individual messages etc) */
+	this.CleanPSNList = function(input)
+	{
+		return input.replace(/[^a-zA-Z0-9_\-\|,~]/g, "");
+	}
+
 	/** Check a PSN name is valid (must run against validate regex and be between 2 and 21 characters) */
 	this.CheckPSN = function(username)
 	{
@@ -347,7 +353,23 @@ function PSNObj(options)
 						return;
 					}
 					// server successfully returned, but returned an error
-					if (callback) callback("Server error: " + response.statusCode);
+					var JSONBody;
+					try
+					{
+						JSONBody = JSON.parse(response.body);
+					}
+					catch(error_err)
+					{
+					}
+
+					if (JSONBody && JSONBody.error && JSONBody.error.message)
+					{
+						if (callback) callback("Server error: " + response.statusCode + ": " + JSONBody.error.code + " - " + JSONBody.error.message);
+					}
+					else
+					{
+						if (callback) callback("Server error: " + response.statusCode);
+					}
 					return;
 				}
 				else
@@ -642,7 +664,8 @@ function PSNObj(options)
 		Log("Fetching user profile data");
 
 		// get the current user's data
-		parent.Get("https://vl.api.np.km.playstation.net/vl/api/v1/mobile/users/me/info", function(error, data) {
+		parent.Get("https://vl.api.np.km.playstation.net/vl/api/v1/mobile/users/me/info", {}, function(error, data)
+		{
 			if (error)
 			{
 				Log("Error fetching user profile: " + error);
@@ -681,26 +704,33 @@ function PSNObj(options)
 		// build list of tokens we're missing
 		var todo = [];
 
+		// force token_fetch to an array
+		token_fetch = [].concat(token_fetch);
+
 		// make sure we're actually logged in first
 		if (!auth_obj.auth_code)
 		{
+			Log("Need to login - no auth token found");
 			todo.push(Login);
 		}
 
 		if (!auth_obj.expire_time || auth_obj.expire_time < new Date().getTime())
 		{
 			// token has expired! Fetch access_token again
+			Log("Need to fetch access tokens - tokens expired");
 			todo.push(GetAccessToken);
 		}
 		else if (!auth_obj.access_token)
 		{
 			// we have no access token (?!)
+			Log("Need to fetch access tokens - no token available");
 			todo.push(GetAccessToken);
 		}
 
 		if (!auth_obj.username || !auth_obj.region)
 		{
 			// missing player username/region
+			Log("Need to fetch userdata - no region or username available");
 			todo.push(GetUserData);
 		}
 
@@ -722,7 +752,7 @@ function PSNObj(options)
 					return;
 				}
 
-				if (token_fetch == func)
+				if (token_fetch.indexOf(func) >= 0)
 				{
 					// if we're actually calling a token fetch function, skip!
 					process.nextTick(step);
