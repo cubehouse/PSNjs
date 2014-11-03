@@ -3,6 +3,7 @@ var PSNRequest = require("./psn_request");
 
 // which fields to request when getting a profile
 var profileFields = "@default,relation,requestMessageFlag,presence,@personalDetail,trophySummary";
+var friendFields = "@default,relation,onlineId,avatarUrl,plus,@personalDetail,trophySummary";
 var messageFields = "@default,messageGroupId,messageGroupDetail,totalUnseenMessages,totalMessages,latestMessage";
 var notificationFields = "@default,message,actionUrl";
 
@@ -225,6 +226,54 @@ PSNRequest.prototype.sendFriendRequest = function(username, message, callback)
 		callback
 	);
 };
+
+/** Get the user's friend list
+ * @param offset		(optional) Index to start friend list
+ * @param limit			(optional) Maximum limit of friends to fetch
+ * @param friendType 	(optional) Type of friends to filter by (accepts friend, requesting or requested)
+ * @param callback		Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.getFriends = function(offset, limit, friendType, callback)
+{
+	// most variables are optional
+	if (typeof offset == "function")
+	{
+		callback = offset;
+		offset = 0;
+		limit = 32;
+		friendType = "friend";
+	}
+	else if (typeof limit == "function")
+	{
+		callback = limit;
+		limit = 32;
+		friendType = "friend";
+	}
+	else if (typeof friendType == "function")
+	{
+		callback = friendType;
+		friendType = "friend";
+	}
+
+	// fallback on default "friend" type if invalid option is supplied
+	if (friendType != "requesting" || friendType != "requested")
+	{
+		friendType = "friend";
+	}
+
+	this.Get(
+		"https://{{region}}-prof.np.community.playstation.net/userProfile/v1/users/{{psn}}/friendList",
+		{
+			fields: friendFields,
+			sort: "onlineId", // sort by onlineID
+			avatarSize: "l", // large avatar images
+			limit: limit,
+			offset: offset,
+			friendStatus: friendType
+		},
+		callback
+	);
+}
 
 // return our new psn request object with our new helper functions
 module.exports = PSNRequest;
