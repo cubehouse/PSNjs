@@ -92,6 +92,7 @@ PSNRequest.prototype.activityTypes = [
  *					Allowed: PURCHASED, RATED, VIDEO_UPLOAD, SCREENSHOT_UPLOAD, PLAYED_GAME, STORE_PROMO, WATCHED_VIDEO, TROPHY, BROADCASTING, LIKED, PROFILE_PIC, FRIENDED and CONTENT_SHARE
  *					Use an empty array (or leave out argument) for all types
  * @param page 		Page of feed to load (default: 0)
+ * @param callback	Callback function with error (false if no error) and returned data object
  */
 PSNRequest.prototype.getLatestActivity = function(feed, filters, page, callback)
 {
@@ -133,6 +134,39 @@ PSNRequest.prototype.getLatestActivity = function(feed, filters, page, callback)
 		},
 		callback
 	);
+}
+
+/** Like an activity from the activity feed
+ * @param storyId	The ID of the activity we want to like
+ * @param dislike	(optional) set to true to dislike instead of like
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.likeActivity = function(storyId, dislike, callback)
+{
+	// support passing dislike manually into the function
+	if (typeof dislike == "function")
+	{
+		callback = dislike;
+		dislike = false;
+	}
+
+	this.Get(
+		"https://activity.api.np.km.playstation.net/activity/api/v1/users/{{psn}}/set/" + (dislike ? "dis" : "") + "like/story/{{storyId}}".
+		// tidy up passed in story ID - contains 42 lower-case hexadecimal chars in format: {8}-{4}-{4}-{4}-{12}
+		replace("{{storyId}}", storyId.replace(/[^a-z0-9\-]/g, "")),
+		{},
+		callback
+	);
+}
+
+/** Dislike an activity from the activity feed
+ * @param storyId	The ID of the activity we want to dislike
+ * @param callback	Callback function with error (false if no error) and returned data object
+ */
+PSNRequest.prototype.dislikeActivity = function(storyId, callback)
+{
+	// just call like with dislike set to true
+	this.likeActivity(storyId, true, callback);
 }
 
 // return our new psn request object with our new helper functions
