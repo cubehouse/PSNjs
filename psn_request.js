@@ -197,6 +197,11 @@ function PSNObj(options)
 		return input;
 	}
 
+	/** Clean up a NPCommID of any weird characters */
+	this.CleanNPCommID = function(titleId)
+	{
+		return titleId.replace(/[^a-zA-Z0-9_]/, "");
+	}
 
 	/** Generate headers for a PSN request */
 	function GetHeaders(additional_headers)
