@@ -261,7 +261,7 @@ PSNRequest.prototype.getFriends = function(offset, limit, friendType, callback)
 	}
 
 	// fallback on default "friend" type if invalid option is supplied
-	if (friendType != "requesting" || friendType != "requested")
+	if (friendType != "requesting" && friendType != "requested")
 	{
 		friendType = "friend";
 	}
