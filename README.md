@@ -53,7 +53,7 @@ psn.getUserTrophies(function(error, data) {
 ```javascript
 {
 	email: "PSNEMAIL", // your email
-	password: "PSMPASSWORD", // your password
+	password: "PSNPASSWORD", // your password
 	debug: true, // enable debug logging?
 	requestDebug: false, // enable the request library's debug output?
 	autoconnect: false, // make a PSN request immediately (make sure you use onReady if you do this)
@@ -87,8 +87,7 @@ psn.Load("SAVED DATA", function(error) {
 });
 
 // save example
-psn.OnSave = function(data, callback)
-{
+psn.OnSave(function(data, callback) {
 	// save data
 	// data will be a Base64 string
 	mySaveSystem.save(data, function() {
@@ -97,7 +96,7 @@ psn.OnSave = function(data, callback)
 		//  handle your own error reporting and debugging
 		callback();
 	});
-};
+});
 ```
 
 Functions
