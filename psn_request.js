@@ -733,27 +733,27 @@ function PSNObj(options)
 		if (!auth_obj.auth_code)
 		{
 			Log("Need to login - no auth token found");
-			todo.push(Login);
+			todo.push({name: "Login", func: Login});
 		}
 
 		if (!auth_obj.expire_time || auth_obj.expire_time < new Date().getTime())
 		{
 			// token has expired! Fetch access_token again
 			Log("Need to fetch access tokens - tokens expired");
-			todo.push(GetAccessToken);
+			todo.push({name: "GetAccessToken", func: GetAccessToken});
 		}
 		else if (!auth_obj.access_token)
 		{
 			// we have no access token (?!)
 			Log("Need to fetch access tokens - no token available");
-			todo.push(GetAccessToken);
+			todo.push({name: "GetAccessToken", func: GetAccessToken});
 		}
 
 		if (!auth_obj.username || !auth_obj.region)
 		{
 			// missing player username/region
 			Log("Need to fetch userdata - no region or username available");
-			todo.push(GetUserData);
+			todo.push({name: "GetUserData", func: GetUserData});
 		}
 
 		if (todo.length == 0)
@@ -774,18 +774,18 @@ function PSNObj(options)
 					return;
 				}
 
-				if (token_fetch.indexOf(func) >= 0)
+				if (token_fetch.indexOf(func.func) >= 0)
 				{
 					// if we're actually calling a token fetch function, skip!
 					process.nextTick(step);
 				}
 				else
 				{
-					func(function(error) {
+					func.func(function(error) {
 						if (error)
 						{
 							// token fetching error!
-							if (callback) callback(error);
+							if (callback) callback(func.name + " :: " + error);
 							return;
 						}
 
