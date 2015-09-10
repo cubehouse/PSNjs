@@ -27,7 +27,7 @@ languages = [
 	"zh-TW"
 ];
 
-var useragent = "Mozilla/5.0 (Linux; U; Android 4.3; {{lang}}; C6502 Build/10.4.1.B.0.101) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30 PlayStation App/1.60.5/{{lang}}/{{lang}}";
+var useragent = "Mozilla/5.1 (Linux; U; Android 5.0.1; {{lang}}; C6502 Build/11.4.1.B.0.101) AppleWebKit/564.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/564.30 PlayStation App/2.55.7/{{lang}}/{{lang}}";
 
 // default request headers
 var headers = {
