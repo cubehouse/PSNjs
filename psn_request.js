@@ -44,10 +44,10 @@ var oauth_settings = {
     "redirect_uri": 	"com.scee.psxandroid.scecompcall://redirect",
     "client_id": 		"b0d0d7ad-bb99-4ab1-b25e-afa0c76577b0",
     "client_secret": 	"Zo4y8eGIa3oazIEp",
-    "scope": 			"psn:sceapp",
-    "duid": 			"00000005006401283335353338373035333434333134313a433635303220202020202020202020202020202020",
-    "state": 			"x"
+    "scope": 			"psn:sceapp,user:account.get,user:account.settings.privacy.get,user:account.settings.privacy.update,user:account.realName.get,user:account.realName.update,kamaji:get_account_hash"
 };
+
+var login_params = "service_entity=psn&request_theme=liquid";
 
 var urls = {
 	login_base: 	"https://auth.api.sonyentertainmentnetwork.com",
@@ -433,7 +433,7 @@ function PSNObj(options)
 				response_type: "code",
 				service_entity: "urn:service-entity:psn",
 				returnAuthCode: true,
-				cltm: "1399637146935"
+				state: "1156936032"
 			}),
 			// headers
 			{
@@ -461,12 +461,14 @@ function PSNObj(options)
 							method: "POST",
 				            headers:
 				            {
+				            	'User-Agent': ParseStaches(useragent),
+				            	'X-Requested-With': headers["X-Requested-With"],
 				                'Origin': 'https://auth.api.sonyentertainmentnetwork.com',
-				                'Referer': login_referrer
+				                'Referer': login_referrer,
 				            },
 				            form:
 				            {
-				                'params': 'service_entity=psn',
+				                'params': new Buffer(login_params).toString('base64'),
 				                'j_username': login_details.email,
 				                'j_password': login_details.password
 				            }
@@ -483,6 +485,7 @@ function PSNObj(options)
 				        	else
 				        	{
 					        	Log("Following login...");
+					        	
 					            request.get(response.headers.location, function (err, response, body)
 					            {
 					                if (!err)
@@ -491,8 +494,19 @@ function PSNObj(options)
 					                	var result = url.parse(response.req.path, true);
 					                	if (result.query.authentication_error)
 					                	{
-											Log("Login failed!");
-							        		if (callback) callback("Login failed!");
+					                		// try to extract login error from website
+					                		var error_message = /errorDivMessage\"\>\s*(.*)\<br \/\>/.exec(body);
+					                		if (error_message && error_message[1])
+					                		{
+					                			Log("Login failed! Error from Sony: " + error_message[1]);
+					                			if (callback) callback(error_message[1]);
+					                		}
+					                		else
+					                		{
+												Log("Login failed!");
+								        		if (callback) callback("Login failed!");
+								        	}
+
 							        		return;
 					                	}
 					                	else
